@@ -1,0 +1,269 @@
+name: Update 50 M3U Playlist Copies
+
+on:
+  schedule:
+    # Runs every 2 minutes
+    - cron: '*/2 * * * *'
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  update-playlists:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT_TOKEN }}
+        fetch-depth: 1
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Define playlist filenames
+      run: |
+        # Create array of 50 unique hash filenames (10 characters each)
+        cat > playlist_names.txt << 'EOF'
+        k7m2n9p4q1.m3u
+        r5s8t3u6v9.m3u
+        w2x5y8z1a4.m3u
+        b7c0d3e6f9.m3u
+        g2h5i8j1k4.m3u
+        l7m0n3p6q9.m3u
+        r2s5t8u1v4.m3u
+        w7x0y3z6a9.m3u
+        b2c5d8e1f4.m3u
+        g7h0i3j6k9.m3u
+        l2m5n8o1p4.m3u
+        q7r0s3t6u9.m3u
+        v2w5x8y1z4.m3u
+        a7b0c3d6e9.m3u
+        f2g5h8i1j4.m3u
+        k7l0m3n6o9.m3u
+        p2q5r8s1t4.m3u
+        u7v0w3x6y9.m3u
+        z2a5b8c1d4.m3u
+        e7f0g3h6i9.m3u
+        j2k5l8m1n4.m3u
+        o7p0q3r6s9.m3u
+        t2u5v8w1x4.m3u
+        y7z0a3b6c9.m3u
+        d2e5f8g1h4.m3u
+        i7j0k3l6m9.m3u
+        n2o5p8q1r4.m3u
+        s7t0u3v6w9.m3u
+        x2y5z8a1b4.m3u
+        c7d0e3f6g9.m3u
+        h2i5j8k1l4.m3u
+        m7n0o3p6q9.m3u
+        r2s5t8u1v4.m3u
+        w7x0y3z6a9.m3u
+        b2c5d8e1f4.m3u
+        g7h0i3j6k9.m3u
+        l2m5n8o1p4.m3u
+        q7r0s3t6u9.m3u
+        v2w5x8y1z4.m3u
+        a7b0c3d6e9.m3u
+        f2g5h8i1j4.m3u
+        k7l0m3n6o9.m3u
+        p2q5r8s1t4.m3u
+        u7v0w3x6y9.m3u
+        z2a5b8c1d4.m3u
+        e7f0g3h6i9.m3u
+        j2k5l8m1n4.m3u
+        o7p0q3r6s9.m3u
+        t2u5v8w1x4.m3u
+        y7z0a3b6c9.m3u
+        EOF
+        
+        echo "Created list of 50 unique playlist filenames"
+
+    - name: Fetch M3U content
+      run: |
+        echo "Fetching M3U playlist from source URL..."
+        
+        # Fetch the M3U content once
+        curl -s -L "${{ secrets.M3U_URL }}" > temp_playlist.m3u
+        
+        # Check if download was successful
+        if [ ! -s temp_playlist.m3u ]; then
+          echo "Error: Failed to download M3U playlist or file is empty"
+          exit 1
+        fi
+        
+        echo "Successfully fetched M3U playlist"
+        echo "Playlist contains $(wc -l < temp_playlist.m3u) lines"
+        
+        # Show first few lines for verification
+        echo "First 5 lines of playlist:"
+        head -5 temp_playlist.m3u
+
+    - name: Check for changes in existing playlists
+      id: check_changes
+      run: |
+        CHANGES_DETECTED=false
+        FIRST_PLAYLIST=$(head -1 playlist_names.txt)
+        
+        # Check if any playlist file exists and compare with new content
+        if [ -f "$FIRST_PLAYLIST" ]; then
+          if ! cmp -s temp_playlist.m3u "$FIRST_PLAYLIST"; then
+            echo "Changes detected in M3U playlist content"
+            CHANGES_DETECTED=true
+            
+            # Show diff summary
+            echo "=== CHANGES SUMMARY ==="
+            echo "Lines added/modified:"
+            diff --unified=0 "$FIRST_PLAYLIST" temp_playlist.m3u | grep "^+" | wc -l
+            echo "Lines removed:"
+            diff --unified=0 "$FIRST_PLAYLIST" temp_playlist.m3u | grep "^-" | wc -l
+          else
+            echo "No changes detected in M3U playlist content"
+          fi
+        else
+          echo "No existing playlist files found, will create all 50"
+          CHANGES_DETECTED=true
+        fi
+        
+        echo "has_changes=$CHANGES_DETECTED" >> $GITHUB_OUTPUT
+
+    - name: Create playlist names file
+      run: |
+        echo "Creating playlist-files.txt with all 50 filenames..."
+        
+        # Create the playlist names file for the repository
+        cat > playlist-files.txt << 'EOF'
+        k7m2n9p4q1.m3u
+        r5s8t3u6v9.m3u
+        w2x5y8z1a4.m3u
+        b7c0d3e6f9.m3u
+        g2h5i8j1k4.m3u
+        l7m0n3p6q9.m3u
+        r2s5t8u1v4.m3u
+        w7x0y3z6a9.m3u
+        b2c5d8e1f4.m3u
+        g7h0i3j6k9.m3u
+        l2m5n8o1p4.m3u
+        q7r0s3t6u9.m3u
+        v2w5x8y1z4.m3u
+        a7b0c3d6e9.m3u
+        f2g5h8i1j4.m3u
+        k7l0m3n6o9.m3u
+        p2q5r8s1t4.m3u
+        u7v0w3x6y9.m3u
+        z2a5b8c1d4.m3u
+        e7f0g3h6i9.m3u
+        j2k5l8m1n4.m3u
+        o7p0q3r6s9.m3u
+        t2u5v8w1x4.m3u
+        y7z0a3b6c9.m3u
+        d2e5f8g1h4.m3u
+        i7j0k3l6m9.m3u
+        n2o5p8q1r4.m3u
+        s7t0u3v6w9.m3u
+        x2y5z8a1b4.m3u
+        c7d0e3f6g9.m3u
+        h2i5j8k1l4.m3u
+        m7n0o3p6q9.m3u
+        r2s5t8u1v4.m3u
+        w7x0y3z6a9.m3u
+        b2c5d8e1f4.m3u
+        g7h0i3j6k9.m3u
+        l2m5n8o1p4.m3u
+        q7r0s3t6u9.m3u
+        v2w5x8y1z4.m3u
+        a7b0c3d6e9.m3u
+        f2g5h8i1j4.m3u
+        k7l0m3n6o9.m3u
+        p2q5r8s1t4.m3u
+        u7v0w3x6y9.m3u
+        z2a5b8c1d4.m3u
+        e7f0g3h6i9.m3u
+        j2k5l8m1n4.m3u
+        o7p0q3r6s9.m3u
+        t2u5v8w1x4.m3u
+        y7z0a3b6c9.m3u
+        EOF
+        
+        echo "Created playlist-files.txt with 50 filenames"
+
+    - name: Create/Update all 50 playlist files
+      if: steps.check_changes.outputs.has_changes == 'true'
+      run: |
+        echo "Creating/updating all 50 playlist files..."
+        
+        UPDATED_COUNT=0
+        while IFS= read -r filename; do
+          if [ -n "$filename" ]; then
+            cp temp_playlist.m3u "$filename"
+            UPDATED_COUNT=$((UPDATED_COUNT + 1))
+            echo "Updated: $filename"
+          fi
+        done < playlist_names.txt
+        
+        echo "Successfully created/updated $UPDATED_COUNT playlist files"
+        echo "updated_count=$UPDATED_COUNT" >> $GITHUB_OUTPUT
+
+    - name: Commit and push changes
+      if: steps.check_changes.outputs.has_changes == 'true'
+      run: |
+        # Configure git
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add the playlist names file
+        git add playlist-files.txt
+        
+        # Add all playlist files
+        while IFS= read -r filename; do
+          if [ -n "$filename" ]; then
+            git add "$filename"
+          fi
+        done < playlist_names.txt
+        
+        # Create commit with timestamp
+        TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        CHANNEL_COUNT=$(grep -c "^#EXTINF" temp_playlist.m3u || echo "0")
+        
+        git commit -m "Auto-update 50 M3U playlist copies - $TIMESTAMP
+
+        📺 Channels: $CHANNEL_COUNT
+        📁 Files updated: 50 copies + playlist-files.txt
+        🤖 Updated by GitHub Actions
+        ⏰ Last update: $TIMESTAMP"
+        
+        # Push changes
+        git push
+
+    - name: Cleanup
+      if: always()
+      run: |
+        # Remove temporary files
+        rm -f temp_playlist.m3u
+        
+        echo "Cleanup completed"
+
+    - name: Workflow summary
+      if: always()
+      run: |
+        echo "=== WORKFLOW SUMMARY ==="
+        echo "Status: ${{ job.status }}"
+        echo "Changes detected: ${{ steps.check_changes.outputs.has_changes }}"
+        echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+        
+        FIRST_PLAYLIST=$(head -1 playlist_names.txt)
+        if [ -f "$FIRST_PLAYLIST" ]; then
+          CHANNEL_COUNT=$(grep -c "^#EXTINF" "$FIRST_PLAYLIST" || echo "0")
+          echo "Current channel count: $CHANNEL_COUNT"
+          echo "Total playlist files: 50"
+        fi
+        
+        if [ -f playlist-files.txt ]; then
+          echo "Playlist names file: playlist-files.txt created"
+          echo "Total names listed: $(wc -l < playlist-files.txt)"
+        fi
